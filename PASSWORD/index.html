@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🔓 PDF Password Tool</title>
+
+<!-- ✅ Use CDN pdf.js (your attached file works too) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+
+<style>
+body{
+  margin:0;
+  font-family: Arial, sans-serif;
+  background:#f1f3f6;
+  padding-bottom: env(safe-area-inset-bottom);
+  overscroll-behavior: none;
+}
+
+/* Fixed full height wrapper */
+.wrapper{
+  display:flex;
+  min-height: 100vh;
+  height: 100vh;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+
+/* Main Left Panel - 3x width */
+.main{
+  flex:3;
+  top: 32px;
+  padding:15px;
+  display:flex;
+  flex-direction:column;
+  position: relative;
+}
+
+/* Right Slim Password Panel */
+.password-panel{
+  flex:1;
+  background:#111;
+  color:#0f0;
+  padding:10px;
+  overflow-y:auto;
+  font-family:monospace;
+  font-size:13px;
+  min-height:0;
+}
+
+/* Content Area */
+.main-content{
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  min-height:0;
+}
+
+/* Heading */
+h2{
+  text-align:center;
+  margin-top:10px;
+  margin-bottom:10px;
+}
+
+/* File Upload - FIXED HEIGHT */
+.file-box{
+  background:white;
+  padding:15px;
+  border-radius:12px;
+  box-shadow:0 4px 10px rgba(0,0,0,0.1);
+  margin-bottom:12px;
+  text-align:center;
+  height:100px;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  box-sizing:border-box;
+}
+
+input[type="file"]{ display:none; }
+
+.upload-btn{
+  display:inline-block;
+  padding:10px 18px;
+  background:#4CAF50;
+  color:white;
+  border-radius:25px;
+  font-weight:bold;
+  cursor:pointer;
+  font-size:15px;
+  box-shadow:0 3px 8px rgba(0,0,0,0.2);
+  transition:0.2s;
+}
+
+.upload-btn:active{ transform:scale(0.96); }
+
+.file-name{
+  margin-top:8px;
+  font-size:13px;
+  color:#555;
+  word-break:break-all;
+  max-height:30px;
+  overflow:hidden;
+  line-height:1.2;
+}
+
+/* Input Group */
+.input-group{
+  background:white;
+  padding:12px;
+  border-radius:12px;
+  box-shadow:0 4px 10px rgba(0,0,0,0.1);
+  margin-bottom:12px;
+  flex-shrink:0;
+}
+
+.name-wrapper{
+  display:flex;
+  justify-content:center;
+  margin-bottom:12px;
+}
+
+.name-wrapper input{
+  width:65%;
+  max-width:180px;
+  padding:12px;
+  border-radius:12px;
+  border:2px solid #4CAF50;
+  text-align:center;
+  font-size:18px;
+  font-weight:bold;
+  letter-spacing:2px;
+  transition:0.2s;
+}
+
+.name-wrapper input:focus{
+  outline:none;
+  border-color:#2e7d32;
+  box-shadow:0 0 6px rgba(76,175,80,0.4);
+}
+
+.small-row{ display:flex; gap:8px; margin-bottom:10px; }
+
+input[type="text"], input[type="number"]{
+  width:100%;
+  padding:10px;
+  border-radius:8px;
+  border:1px solid #ccc;
+  text-align:center;
+  font-size:16px;
+}
+
+button{
+  width:100%;
+  padding:12px;
+  border:none;
+  border-radius:10px;
+  margin-top:8px;
+  font-size:16px;
+  font-weight:bold;
+}
+
+.generate{ background:#4CAF50; color:white; }
+.check{ background:#ff5722; color:white; }
+
+/* ✅ FIXED Status Bar */
+.status-wrapper {
+  position: fixed;
+  top: 10px;
+  left: 37%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  background: rgba(0,0,0,0.8);
+  padding: 8px 16px;
+  border-radius: 20px;
+  color: white;
+  font-weight: bold;
+  font-size: 14px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  min-width: 180px;
+  text-align: center;
+}
+
+.progress { color: #2196F3; }
+.success { color: #4CAF50; }
+.error { color: #f44336; }
+
+/* Keyboard handling */
+@supports (height: 100dvh) {
+  .wrapper { height: 100dvh; }
+}
+@supports (padding: max(0px)) {
+  body { padding-bottom: max(env(safe-area-inset-bottom), 0px); }
+}
+</style>
+</head>
+<body>
+
+<!-- ✅ FIXED Status - Top Center -->
+<div class="status-wrapper">
+  <div class="status" id="status">🚀 Ready</div>
+</div>
+
+<div class="wrapper">
+  <!-- Main Left Panel -->
+  <div class="main">
+    <h2>🔓 PDF Password Tool</h2>
+    
+    <div class="main-content">
+      <!-- File Upload -->
+      <div class="file-box">
+        <label for="pdfFile" class="upload-btn">📂 Choose PDF File</label>
+        <input type="file" id="pdfFile" accept="application/pdf" onchange="showFileName()">
+        <div class="file-name" id="fileName">No file selected</div>
+      </div>
+
+      <!-- Controls -->
+      <div class="input-group">
+        <div class="name-wrapper">
+          <input type="text" id="prefix" maxlength="4" placeholder="RAJA">
+        </div>
+        <div class="small-row">
+          <input type="number" id="start" value="1920" maxlength="4" placeholder="Start">
+          <input type="number" id="end" value="2020" maxlength="4" placeholder="End">
+        </div>
+        <button class="generate" onclick="generate()">📝 Generate Password List</button>
+        <button class="check" onclick="checkPasswords()">🔍 Check Password</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right Password Panel -->
+  <div class="password-panel" id="output">
+    Password List...
+  </div>
+</div>
+
+<script>
+let passwordList = [];
+let pdfFile = null;
+let pdfjsLib = null;
+
+// ✅ Status helper
+function updateStatus(msg, type = '') {
+  const statusEl = document.getElementById("status");
+  const span = document.createElement('span');
+  span.className = type;
+  span.innerHTML = msg;
+  statusEl.innerHTML = '';
+  statusEl.appendChild(span);
+}
+
+// ✅ Initialize PDF.js with proper worker
+function initPDFJS() {
+  return new Promise((resolve) => {
+    if (window.pdfjsLib) {
+      pdfjsLib = window.pdfjsLib;
+      pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+      resolve();
+    } else {
+      // Wait for script to load
+      setTimeout(() => initPDFJS().then(resolve), 100);
+    }
+  });
+}
+
+// ✅ File selection with validation
+function showFileName(){
+  let file = document.getElementById("pdfFile").files[0];
+  pdfFile = file;
+  let fileNameEl = document.getElementById("fileName");
+  
+  if(file) {
+    // ✅ File size check
+    if(file.size > 50 * 1024 * 1024) {
+      updateStatus('❌ File too large (max 50MB)', 'error');
+      pdfFile = null;
+      return;
+    }
+    
+    let name = file.name.length > 35 ? file.name.substring(0, 32) + "..." : file.name;
+    fileNameEl.innerText = name;
+    updateStatus('✅ File selected', 'success');
+  } else {
+    fileNameEl.innerText = "No file selected";
+  }
+}
+
+// ✅ Generate password list
+function generate(){
+  let prefix = document.getElementById("prefix").value.trim().toUpperCase();
+  let start = parseInt(document.getElementById("start").value);
+  let end = parseInt(document.getElementById("end").value);
+
+  if(prefix.length !== 4){
+    updateStatus('❌ Name must be exactly 4 letters', 'error');
+    return;
+  }
+
+  if(isNaN(start) || isNaN(end) || start > end || end - start > 200){
+    updateStatus('❌ Enter valid years (max 200)', 'error');
+    return;
+  }
+
+  passwordList = [];
+  let result = "";
+  for(let i = start; i <= end; i++){
+    let pass = prefix + i.toString().padStart(4, '0');
+    passwordList.push(pass);
+    result += pass + "<br>";
+  }
+
+  document.getElementById("output").innerHTML = result;
+  updateStatus(`✅ Total: ${passwordList.length} passwords`, 'success');
+}
+
+// ✅ Main password cracking function
+async function checkPasswords(){
+  if(!pdfFile){
+    updateStatus('❌ Select PDF file first', 'error');
+    return;
+  }
+
+  if(passwordList.length === 0){
+    updateStatus('❌ Generate password list first', 'error');
+    return;
+  }
+
+  let statusEl = document.getElementById("status");
+  statusEl.innerHTML = "<span class='progress'>⏳ Loading PDF...</span>";
+
+  try {
+    await initPDFJS();
+    let arrayBuffer = await pdfFile.arrayBuffer();
+    let typedarray = new Uint8Array(arrayBuffer);
+    
+    updateStatus(`🔍 Checking... 0/${passwordList.length}`, 'progress');
+    
+    // ✅ Optimized loop with throttling
+    for(let i = 0; i < passwordList.length; i++){
+      let pass = passwordList[i];
+      
+      // ✅ Update status every 10 attempts
+      if(i % 10 === 0 || i === passwordList.length - 1) {
+        updateStatus(`Trying: <strong>${pass}</strong> (${i+1}/${passwordList.length})`, 'progress');
+      }
+      
+      try {
+        const loadingTask = pdfjsLib.getDocument({ 
+          data: typedarray, 
+          password: pass,
+          verbosity: 0  // Silent mode
+        });
+        
+        // ✅ 2 second timeout per attempt
+        await Promise.race([
+          loadingTask.promise,
+          new Promise(resolve => setTimeout(() => resolve(), 2000))
+        ]);
+        
+        // ✅ PASSWORD FOUND!
+        updateStatus(`🎉 PASSWORD : <strong>${pass}</strong>`, 'success');
+        document.getElementById("output").innerHTML += 
+          `<br><br><span style='color:#0f0;font-size:18px;font-weight:bold;'>✅ CORRECT: ${pass}</span>`;
+        
+        if(navigator.vibrate) navigator.vibrate(200); // Haptic feedback
+        alert("🎉 Password Found: " + pass);
+        return;
+        
+      } catch(e) {
+        // ✅ Ignore password errors silently
+        if(!e.message?.includes("password") && !e.message?.includes("Incorrect")) {
+          console.error("PDF Error:", e);
+        }
+      }
+    }
+    
+    updateStatus(`❌ Not found (${passwordList.length} attempts)`, 'error');
+    
+  } catch(error) {
+    updateStatus(`❌ Error: ${error.message}`, 'error');
+    console.error(error);
+  }
+}
+</script>
+
+</body>
+  </html>
